@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    deploy:
+        name: Build and push
+        runs-on: ubuntu-24.04-arm
+
+        env:
+            IMAGE_TAG: ${{ github.run_number }}
+            OCIR_REGISTRY: yny.ocir.io
+            OCIR_NAMESPACE: ax1dvc8vmenm
+            OCIR_REPOSITORY: waffle-n8n/waffle-n8n
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Login to OCIR
+              uses: docker/login-action@v2
+              with:
+                registry: ${{ env.OCIR_REGISTRY}}
+                username: ${{ secrets.OCIR_USERNAME}}
+                password: ${{ secrets.OCIR_PASSWORD}}
+            
+            - name: Build and push image
+              id: build-image
+              uses: docker/build-push-action@v5
+              with:
+                context: .
+                file: ./Dockerfile
+                push: true
+                platforms: linux/arm64
+                tags: ${{ env.OCIR_REGISTRY}}/${{env.OCIR_NAMESPACE}}/${{env.OCIR_REPOSITORY}}:${{env.IMAGE_TAG}}
